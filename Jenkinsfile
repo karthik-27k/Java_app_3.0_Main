@@ -108,6 +108,14 @@ pipeline{
                    dockerImageCleanup("${params.ImageName}","${params.ImageTag}","${params.DockerHubUser}")
                }
             }
+        }
+        stage('message'){
+            when { expression {  params.action == 'create' } }
+            steps{
+                script {
+                    echo " sucessfull"
+                }
+            }
         }      
     }
 }
