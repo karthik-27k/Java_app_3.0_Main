@@ -44,6 +44,15 @@ pipeline{
                }
             }
         }
+        stage('DatatoDB-Grafan'){
+         when { expression {  params.action == 'create' } }
+            steps{
+               script{
+                   
+                   Grafana-DB()
+               }
+            }
+       }
         stage('Static code analysis: Sonarqube'){
          when { expression {  params.action == 'create' } }
             steps{
