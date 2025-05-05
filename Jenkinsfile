@@ -40,16 +40,14 @@ pipeline {
             }
         }
 
-        stage('Data to DB - Grafana02 (Parallel)') {
+        stage('Data to DB - Grafana02') {
             when { expression { params.action == 'create' } }
-            parallel {
                 stage('Grafana02') {
                     steps {
                         script {
                             grafanaDb02()
                         }
                     }
-                }
             }
         }
 
