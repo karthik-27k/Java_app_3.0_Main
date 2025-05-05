@@ -40,17 +40,6 @@ pipeline {
             }
         }
 
-        stage('Data to DB - Grafana02') {
-            when { expression { params.action == 'create' } }
-                stage('Grafana02') {
-                    steps {
-                        script {
-                            grafanaDb02()
-                        }
-                    }
-            }
-        }
-
         stage('Static Code Analysis: SonarQube') {
             when { expression { params.action == 'create' } }
             steps {
