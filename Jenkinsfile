@@ -39,7 +39,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Static Code Analysis: SonarQube') {
             when { expression { params.action == 'create' } }
             steps {
@@ -104,25 +104,6 @@ pipeline {
                 }
             }
         }
-        
-        stage('Data to DB - Grafana02 (Parallel)') {
-            when { expression { params.action == 'create' } }
-            parallel {
-                stage('Grafana02') {
-                    steps {
-                        script {
-                            grafanaDb02()
-                        }
-                    }
-                }
-            }
-        }
 
-        stage('Final Message') {
-            when { expression { params.action == 'create' } }
-            steps {
-                echo "Pipeline execution successful"
-            }
-        }
-    }
-}
+        stage('Data to DB - Grafana02 (Parallel)') {
+            when { expression { params.action == 'create'
