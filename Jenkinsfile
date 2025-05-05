@@ -96,18 +96,14 @@ pipeline {
             }
         }
 
-        // Parallel stage for Grafana and DB Push
-        stage('Parallel: Grafana and DB Push') {
+        stage('Grafana ') {
             when { expression { params.action == 'create' } }
-            parallel {
-                stage('Grafana and DB Push') {
-                    steps {
-                        script {
-                            grafanaDb02() // Call the shared method for both Grafana and DB push
-                        }
-                    }
+            steps {
+                script {
+                    grafanaDb02()
                 }
             }
         }
+      }
     }
-}
+
