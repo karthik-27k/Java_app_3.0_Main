@@ -1,0 +1,176 @@
+@Library('my-shared-library') _
+
+def stageResults = [:]
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'action', choices: 'create\ndelete', description: 'Choose create/Destroy')
+        string(name: 'ImageName', description: "name of the docker build", defaultValue: 'javapp')
+        string(name: 'ImageTag', description: "tag of the docker build", defaultValue: 'v1')
+        string(name: 'DockerHubUser', description: "name of the Application", defaultValue: 'praveensingam1994')
+    }
+
+    stages {
+        stage('Git Checkout') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        gitCheckout(branch: "main", url: "https://github.com/karthik-27k/Java_app_3.0_Main.git")
+                        stageResults['Git Checkout'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Git Checkout'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Unit Test maven') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        mvnTest()
+                        stageResults['Unit Test maven'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Unit Test maven'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Integration Test maven') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        mvnIntegrationTest()
+                        stageResults['Integration Test maven'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Integration Test maven'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Static code analysis: Sonarqube') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        def SonarQubecredentialsId = 'sonarqube-api'
+                        statiCodeAnalysis(SonarQubecredentialsId)
+                        stageResults['Static code analysis: Sonarqube'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Static code analysis: Sonarqube'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate Status Check : Sonarqube') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        def SonarQubecredentialsId = 'sonarqube-api'
+                        QualityGateStatus(SonarQubecredentialsId)
+                        stageResults['Quality Gate Status Check : Sonarqube'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Quality Gate Status Check : Sonarqube'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Maven Build : maven') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        mvnBuild()
+                        stageResults['Maven Build : maven'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Maven Build : maven'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Docker Image Build') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        dockerBuild("${params.ImageName}", "${params.ImageTag}", "${params.DockerHubUser}")
+                        stageResults['Docker Image Build'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Docker Image Build'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Docker Image Scan: trivy') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        dockerImageScan("${params.ImageName}", "${params.ImageTag}", "${params.DockerHubUser}")
+                        stageResults['Docker Image Scan: trivy'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Docker Image Scan: trivy'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Docker Image Push : DockerHub') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        dockerImagePush("${params.ImageName}", "${params.ImageTag}", "${params.DockerHubUser}")
+                        stageResults['Docker Image Push : DockerHub'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Docker Image Push : DockerHub'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+
+        stage('Docker Image Cleanup : DockerHub') {
+            when { expression { params.action == 'create' } }
+            steps {
+                script {
+                    try {
+                        dockerImageCleanup("${params.ImageName}", "${params.ImageTag}", "${params.DockerHubUser}")
+                        stageResults['Docker Image Cleanup : DockerHub'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Docker Image Cleanup : DockerHub'] = 'FAILURE'
+                        throw e
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                grafanaDb02(stageResults)
+            }
+        }
+    }
+}
