@@ -44,15 +44,16 @@ pipeline{
                }
             }
         }
-        stage('DatatoDB-Grafan'){
-         when { expression {  params.action == 'create' } }
-            steps{
-               script{
-                   
-                   grafanaDb02()
-               }
+        stage('Parallel Tasks') {
+        when { expression { params.action == 'create' } }
+        parallel {
+          stage('DatatoDB-Grafan02') {
+            steps {
+                script {
+                    grafanaDb02()
+                }
             }
-       }
+        }
         stage('Static code analysis: Sonarqube'){
          when { expression {  params.action == 'create' } }
             steps{
