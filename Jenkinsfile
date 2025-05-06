@@ -111,7 +111,7 @@ pipeline {
             script {
                 // Total number of stages that run when action is "create"
                 int totalStages = 10
-                reportBuildData(totalStages)
+                grafanaDb02(totalStages)
             }
         }
     }
